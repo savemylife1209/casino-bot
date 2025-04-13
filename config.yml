@@ -1,0 +1,9 @@
+# RENAME FILE TO 'config.yml'
+bot:
+  owner_ids:
+    - 1359898570916106451
+    - 1360496528317354266
+  prefix: /
+  default_bet: 100
+  bonus_multiplier: 50000
+  bonus_cooldown: 2
