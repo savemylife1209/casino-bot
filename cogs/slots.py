@@ -29,7 +29,7 @@ async def slots(self, ctx: commands.Context, bet: int=1):
         s2 = random.randint(1, items-1)
         s3 = random.randint(1, items-1)
 
-        win_rate = 12/100
+        win_rate = 98/100
 
         if random.random() < win_rate:
             symbols_weights = [3.5, 7, 15, 25, 55] # 
