@@ -3,6 +3,13 @@ from discord.ext import commands
 from modules.helpers import *
 import os
 import asyncio
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "MyBot is ready"
 
 async def main():
     client = commands.Bot(

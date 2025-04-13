@@ -1,5 +1,4 @@
-aiohttp==3.7.4.post0
-async-timeout
+aiohttp
 attrs
 chardet
 discord.py
@@ -10,3 +9,4 @@ PyYAML
 typing-extensions
 yarl
 python-dotenv
+flask
