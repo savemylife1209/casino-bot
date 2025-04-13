@@ -1,9 +1,0 @@
-name: casino-bot
-channels:
-  - defaults
-  - conda-forge
-dependencies:
-  - python=3.10
-  - pytest
-  - flake8
-  # Add other dependencies specific to your project here
