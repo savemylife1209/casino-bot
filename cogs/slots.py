@@ -1,13 +1,11 @@
+import bisect
 import os
 import random
-import bisect
 
 import discord
 from discord.ext import commands
 from modules.economy import Economy
 from modules.helpers import *
-from modules.cards import *
-from modules.payout import *
 from PIL import Image
 
 
@@ -16,9 +14,22 @@ class Slots(commands.Cog):
         self.client = client
         self.economy = Economy()
 
-async def slots(self, ctx: commands.Context, bet: int=1):
+    def check_bet(self, ctx: commands.Context, bet: int=DEFAULT_BET):
+        bet = int(bet)
+        if bet <= 0 or bet > 3:
+            raise commands.errors.BadArgument()
+        current = self.economy.get_entry(ctx.author.id)[2]
+        if bet > current:
+            raise InsufficientFundsException(current, bet)
+
+    @commands.command(
+        brief='Slot machine\nbet must be 1-3',
+        usage='slots *[bet]'
+    )
+    async def slots(self, ctx: commands.Context, bet: int=1):
         self.check_bet(ctx, bet=bet)
-        path = os.path.join('images/')
+        path = os.path.join(ABS_PATH, 'modules/')
+        facade = Image.open(f'{path}slot-face.png').convert('RGBA')
         reel = Image.open(f'{path}slot-reel.png').convert('RGBA')
 
         rw, rh = reel.size
@@ -29,7 +40,7 @@ async def slots(self, ctx: commands.Context, bet: int=1):
         s2 = random.randint(1, items-1)
         s3 = random.randint(1, items-1)
 
-        win_rate = 98/100
+        win_rate = 12/100
 
         if random.random() < win_rate:
             symbols_weights = [3.5, 7, 15, 25, 55] # 
@@ -93,6 +104,35 @@ async def slots(self, ctx: commands.Context, bet: int=1):
             file=file,
             embed=embed
         )
+
+        os.remove(fp)
+
+    @commands.command(
+        brief=f"Purchase credits. Each credit is worth ${DEFAULT_BET}.",
+        usage="buyc [credits]",
+        aliases=["buy", "b"]
+    )
+    async def buyc(self, ctx: commands.Context, amount_to_buy: int):
+        user_id = ctx.author.id
+        profile = self.economy.get_entry(user_id)
+        cost = amount_to_buy * DEFAULT_BET
+        if profile[1] >= cost:
+            self.economy.add_money(user_id, cost*-1)
+            self.economy.add_credits(user_id, amount_to_buy)
+        await ctx.invoke(self.client.get_command('money'))
+
+    @commands.command(
+        brief=f'Sell credits. Each credit is worth ${DEFAULT_BET}.',
+        usage="sellc [credits]",
+        aliases=["sell", "s"]
+    )
+    async def sellc(self, ctx: commands.Context, amount_to_sell: int):
+        user_id = ctx.author.id
+        profile = self.economy.get_entry(user_id)
+        if profile[2] >= amount_to_sell:
+            self.economy.add_credits(user_id, amount_to_sell*-1)
+            self.economy.add_money(user_id, amount_to_sell*DEFAULT_BET)
+        await ctx.invoke(self.client.get_command('money'))
 
 async def setup(client: commands.Bot):
     await client.add_cog(Slots(client))
