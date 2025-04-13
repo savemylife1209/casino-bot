@@ -1,11 +1,6 @@
 import discord
 import random
 from discord.ext import commands
-from modules.economy import Economy
-from modules.helpers import *
-from modules.cards import *
-from modules.payout import *
-from PIL import Image
 
 class Slot(commands.Cog):
     def __init__(self, bot):
