@@ -5,5 +5,5 @@ bot:
     - 1360496528317354266
   prefix: /
   default_bet: 100
-  bonus_multiplier: 100000
-  bonus_cooldown: 0
+  bonus_multiplier: 5
+  bonus_cooldown: 12
