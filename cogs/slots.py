@@ -26,7 +26,8 @@ class Slots(commands.Cog):
         brief='Slot machine\nbet must be 1-100',
         usage='slots *[bet]'
     )
-    async def slots(self, ctx: commands.Context, bet: int=1):
+    async def slots(self, ctx: commands.Context, bet: str="1k"):
+        bet = parse_bet(bet)
         self.check_bet(ctx, bet=bet)
         path = os.path.join(ABS_PATH, 'modules/')
         facade = Image.open(f'{path}slot-face.png').convert('RGBA')
@@ -34,58 +35,43 @@ class Slots(commands.Cog):
 
         rw, rh = reel.size
         item = 180
-        items = rh//item
+        items = rh // item
 
-        s1 = random.randint(1, items-1)
-        s2 = random.randint(1, items-1)
-        s3 = random.randint(1, items-1)
+        s1 = random.randint(1, items - 1)
+        s2 = random.randint(1, items - 1)
+        s3 = random.randint(1, items - 1)
 
-        win_rate = 98/100
+        # Payout logic
+        payouts = {
+            0: (500, 25),  # Seven
+            1: (25, 10),   # Diamond
+            2: (5, 3),     # Bar
+            3: (3, 2),     # Bell
+            4: (2, 1),     # Shoe
+            5: (1, 1),     # Lemon
+            6: (3/4, 1),   # Melon
+            7: (1/2, 3/4), # Heart
+            8: (1/4, 1/2), # Cherry
+        }
 
-        if random.random() < win_rate:
-            symbols_weights = [3.5, 7, 15, 25, 55] # 
-            x = round(random.random()*100, 1)
-            pos = bisect.bisect(symbols_weights, x)
-            s1 = pos + (random.randint(1, (items/6)-1) * 6)
-            s2 = pos + (random.randint(1, (items/6)-1) * 6)
-            s3 = pos + (random.randint(1, (items/6)-1) * 6)
-            # ensure no reel hits the last symbol
-            s1 = s1 - 6 if s1 == items else s1
-            s2 = s2 - 6 if s2 == items else s2
-            s3 = s3 - 6 if s3 == items else s3
-
-        images = []
-        speed = 6
-        for i in range(1, (item//speed)+1):
-            bg = Image.new('RGBA', facade.size, color=(255,255,255))
-            bg.paste(reel, (25 + rw*0, 100-(speed * i * s1)))
-            bg.paste(reel, (25 + rw*1, 100-(speed * i * s2))) # dont ask me why this works, but it took me hours
-            bg.paste(reel, (25 + rw*2, 100-(speed * i * s3)))
-            bg.alpha_composite(facade)
-            images.append(bg)
-
-        fp = str(id(ctx.author.id))+'.gif'
-        images[0].save(
-            fp,
-            save_all=True,
-            append_images=images[1:], # append all images after first to first
-            duration=50  # duration of each slide (ms)
-        )
-
-        # win logic
         result = ('lost', bet)
-        self.economy.add_credits(ctx.author.id, bet*-1)       
-        # (1+s1)%6 gets the symbol 0-5 inclusive
-        if (1+s1)%6 == (1+s2)%6 == (1+s3)%6:
-            symbol = (1+s1)%6
-            reward = [4, 80, 40, 25, 10, 5][symbol] * bet
+        self.economy.add_credits(ctx.author.id, bet * -1)
+
+        if (1 + s1) % 9 == (1 + s2) % 9 == (1 + s3) % 9:
+            symbol = (1 + s1) % 9
+            reward = payouts[symbol][0] * bet
+            result = ('won', reward)
+            self.economy.add_credits(ctx.author.id, reward)
+        elif (1 + s1) % 9 == (1 + s2) % 9 or (1 + s2) % 9 == (1 + s3) % 9:
+            symbol = (1 + s2) % 9
+            reward = payouts[symbol][1] * bet
             result = ('won', reward)
             self.economy.add_credits(ctx.author.id, reward)
 
         embed = make_embed(
             title=(
-                f'You {result[0]} {result[1]} credits'+
-                ('.' if result[0] == 'lost' else '!') # happy or sad based on outcome
+                f'You {result[0]} {result[1]} credits' +
+                ('.' if result[0] == 'lost' else '!')
             ),
             description=(
                 'You now have ' +
@@ -98,8 +84,10 @@ class Slots(commands.Cog):
             )
         )
 
-        file = discord.File(fp, filename=fp)
-        embed.set_image(url=f"attachment://{fp}") # none of this makes sense to me :)
+        fp = os.path.join(path, 'slot-result.png')  # Define the file path
+        facade.save(fp)  # Save the generated image to the file path
+        file = discord.File(fp, filename='slot-result.png')
+        embed.set_image(url="attachment://slot-result.png")
         await ctx.send(
             file=file,
             embed=embed

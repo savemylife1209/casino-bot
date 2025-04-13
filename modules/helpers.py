@@ -47,3 +47,20 @@ def make_embed(title=None, description=None, color=None, author=None,
     if footer: embed.set_footer(text=footer)
     else: embed.set_footer(text=datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
     return embed
+
+
+def parse_bet(bet: str) -> int:
+    """Parses bet strings like '1k', '1m', etc., into integers."""
+    multipliers = {
+        'k': 1_000,
+        'm': 1_000_000,
+        'g': 1_000_000_000,
+        't': 1_000_000_000_000,
+        'p': 1_000_000_000_000_000,
+        'e': 1_000_000_000_000_000_000,
+        'z': 1_000_000_000_000_000_000_000,
+        'y': 1_000_000_000_000_000_000_000_000,
+    }
+    if bet[-1].lower() in multipliers:
+        return int(bet[:-1]) * multipliers[bet[-1].lower()]
+    return int(bet)
