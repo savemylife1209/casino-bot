@@ -6,7 +6,7 @@
         ],
         "name": "Launch Extension",
         "outFiles": [
-            "${workspaceFolder}/out/**/*.js"
+            "${workspaceFolder}/.vscode/tasks.json"
         ],
         "preLaunchTask": "npm",
         "request": "launch",
